@@ -1,7 +1,5 @@
-#include <msp430.h> 
+#include "msp430.h"
 #include "driverlib.h"
-#include "NcApi.h"
-#include "NeoParser.h"
 
 //******************************************************************************
 // Defines *********************************************************************
@@ -161,11 +159,11 @@ void bmi160_init(char FOC_axis)
         UART_transmitString(" Incorrect sensor chip ID ");
     }
     //Configure the accelerometer
-    writeData[0]=0b00101011; //Set acc_us to 0 for off, and acc_bwp must then be 010. Set acc_odr to 1011 for 800Hz sample rate
+    writeData[0]=0b00101000; //Set acc_us to 0 for off, and acc_bwp must then be 010. Set acc_odr to 1011(800Hz),1100(1600Hz),1000(100Hz),0001(25/32Hz)
     I2C_Master_WriteReg(SLAVE_ADDR, 0x40, writeData, 1);
     //Check if configuration worked
     I2C_Master_ReadReg(SLAVE_ADDR, 0x40, 1);
-    if(ReceiveBuffer[0] != 0b00101011)
+    if(ReceiveBuffer[0] != writeData[0])
     {
         UART_transmitString(" Accelerometer config failed ");
     }
@@ -174,11 +172,10 @@ void bmi160_init(char FOC_axis)
     I2C_Master_WriteReg(SLAVE_ADDR, 0x41, writeData, 1);
     //Check if range is set
     I2C_Master_ReadReg(SLAVE_ADDR, 0x41, 1);
-    if(ReceiveBuffer[0] != 0b1000)
+    if(ReceiveBuffer[0] != writeData[0])
     {
         UART_transmitString(" Accelerometer range set failed ");
     }
-
     //Any motion setup
 
     //Set the successive slope threshold
@@ -186,20 +183,19 @@ void bmi160_init(char FOC_axis)
     I2C_Master_WriteReg(SLAVE_ADDR, 0x5F, writeData, 1);
     //Check if slope threshold is set
     I2C_Master_ReadReg(SLAVE_ADDR, 0x5F, 1);
-    if(ReceiveBuffer[0] != 0b00000001)
+    if(ReceiveBuffer[0] != writeData[0])
     {
         UART_transmitString(" Slope threshold not set ");
     }
     //Set trigger level
-    writeData[0]=0b00000001; //15.63mg*value for 8g range, so 0b00000001 means 1*15.63mg=15.63mg
+    writeData[0]=0b00000000; //15.63mg*value for 8g range, so 0b00000000 means 0.5*15.63mg=7.81mg
     I2C_Master_WriteReg(SLAVE_ADDR, 0x60, writeData, 1);
     //Check trigger is set
     I2C_Master_ReadReg(SLAVE_ADDR, 0x60, 1);
-    if(ReceiveBuffer[0] != 0b00000001)
+    if(ReceiveBuffer[0] != writeData[0])
     {
         UART_transmitString(" Trigger not set ");
     }
-
     //Double tap setup
 
     //Set single and double tap timings
@@ -207,7 +203,7 @@ void bmi160_init(char FOC_axis)
     I2C_Master_WriteReg(SLAVE_ADDR, 0x63, writeData, 1);
     //Read the timings
     I2C_Master_ReadReg(SLAVE_ADDR, 0x63, 1);
-    if(ReceiveBuffer[0] != 0b00000110)
+    if(ReceiveBuffer[0] != writeData[0])
     {
         UART_transmitString(" Tap timings not set ");
     }
@@ -216,11 +212,10 @@ void bmi160_init(char FOC_axis)
     I2C_Master_WriteReg(SLAVE_ADDR, 0x64, writeData, 1);
     //Read the threshold
     I2C_Master_ReadReg(SLAVE_ADDR, 0x64, 1);
-    if(ReceiveBuffer[0] != 0b0000)
+    if(ReceiveBuffer[0] != writeData[0])
     {
         UART_transmitString(" Tap timings not set ");
     }
-
     //Interrupt setup
 
     //Set pins
@@ -228,7 +223,7 @@ void bmi160_init(char FOC_axis)
     I2C_Master_WriteReg(SLAVE_ADDR, 0x53, writeData, 1);
     //Read pin status
     I2C_Master_ReadReg(SLAVE_ADDR, 0x53, 1);
-    if(ReceiveBuffer[0] != 0b10001000)
+    if(ReceiveBuffer[0] != writeData[0])
     {
         UART_transmitString(" Pins not set ");
     }
@@ -237,7 +232,7 @@ void bmi160_init(char FOC_axis)
     I2C_Master_WriteReg(SLAVE_ADDR, 0x54, writeData, 1);
     //Check interrupts
     I2C_Master_ReadReg(SLAVE_ADDR, 0x54, 1);
-    if(ReceiveBuffer[0] != 0b1101)
+    if(ReceiveBuffer[0] != writeData[0])
     {
         UART_transmitString(" Interrupts not temp ");
     }
@@ -246,7 +241,7 @@ void bmi160_init(char FOC_axis)
     I2C_Master_WriteReg(SLAVE_ADDR, 0x55, writeData, 1);
     //Check interrupt
     I2C_Master_ReadReg(SLAVE_ADDR, 0x55, 1);
-    if(ReceiveBuffer[0] != 0b00000100)
+    if(ReceiveBuffer[0] != writeData[0])
     {
         UART_transmitString(" Any motion not mapped ");
     }
@@ -255,7 +250,7 @@ void bmi160_init(char FOC_axis)
     I2C_Master_WriteReg(SLAVE_ADDR, 0x57, writeData, 1);
     //Check interrupt
     I2C_Master_ReadReg(SLAVE_ADDR, 0x57, 1);
-    if(ReceiveBuffer[0] != 0b00010000)
+    if(ReceiveBuffer[0] != writeData[0])
     {
         UART_transmitString(" Double tap not mapped ");
     }
@@ -264,7 +259,7 @@ void bmi160_init(char FOC_axis)
     I2C_Master_WriteReg(SLAVE_ADDR, 0x58, writeData, 1);
     //Check filtering
     I2C_Master_ReadReg(SLAVE_ADDR, 0x58, 1);
-    if(ReceiveBuffer[0] != 0b1000)
+    if(ReceiveBuffer[0] != writeData[0])
     {
         UART_transmitString(" Filter not set ");
     }
@@ -277,7 +272,7 @@ void bmi160_init(char FOC_axis)
     {
     UART_transmitString(" Accelerometer not on ");
     }
-
+ 
     //Fast Offset Compensation (FOC) setup
     //0 for reserved, 0 for gyroscope, 00 for x, 00 for y, 0 for z (10 = -1g, 00 = 0g, 01 = 1g)
     switch(FOC_axis)
@@ -295,6 +290,7 @@ void bmi160_init(char FOC_axis)
             writeData[0] = 0b00000000; //Default of all 0g
             break;
     }
+    writeData[0] = 0b00000000;
     I2C_Master_WriteReg(SLAVE_ADDR, 0x69, writeData, 1);
     //Check FOC
     I2C_Master_ReadReg(SLAVE_ADDR, 0x69, 1);
@@ -320,150 +316,12 @@ void bmi160_init(char FOC_axis)
     I2C_Master_WriteReg(SLAVE_ADDR, 0x77, writeData, 1);
     //Check offset compensation
     I2C_Master_ReadReg(SLAVE_ADDR, 0x77, 1);
-    if(ReceiveBuffer[0] != 0b01000000)
+    if(ReceiveBuffer[0] != writeData[0])
     {
         UART_transmitString(" Offset not enabled ");
     }
-    //UART_transmitString(" BMI160 Initialized ");
-}
-
-//******************************************************************************
-// NeoCortec Functions *********************************************************
-//******************************************************************************
-
-//Not sure what the purpose of this is
-typedef union
-{
-tNcApiHostAckNack       NcApiAckNack;
-tNcApiHostData          NcApiHostData;
-tNcApiHostDataHapa      NcApiHostDataHapa;
-tNcApiHostUappData      NcApiHostDataUapp;
-tNcApiHostUappDataHapa  NcApiHostDataUappHapa;
-tNcApiWesStatus         NcApiWesStatus;
-tNcApiNodeInfoReply     NcApiNodeInfo;
-tNcApiNeighborListReply NcApiNeighborList;
-tNcApiNetCmdReply       NcApiNetCmdResponse;
-tNcApiWesSetupRequest   NcApiWesSetupRequest;
-}tNcApiAllMessages;
-
-tNcApi g_ncApi[1];
-uint8_t g_numberOfNcApis = 1;
-
-NcApiErrorCodes NcApiSupportTxData(uint8_t n, uint8_t * finalMsg, uint8_t finalMsgLength)
-{
-    int i;
-    for(i = 0; i < finalMsgLength; i++)
-    {
-        while(!(UCA1IFG&UCTXIFG));
-        UCA1TXBUF = finalMsg[i];
-    }
-    return NCAPI_OK;
-}
-
-void NcApiSupportMessageWritten(uint8_t n, void * callbackToken, uint8_t * finalMsg, uint8_t finalMsgLength)
-{
-    int i;
-    for(i = 0; i < finalMsgLength; i++)
-    {
-        switch(i)
-        {
-            case 0:
-                UART_transmitString(" CMD: "); //Command
-                break;
-            case 2:
-                UART_transmitString(" PL: "); //Payload Length
-                break;
-            case 3:
-                UART_transmitString(" RCVR: "); //Receiver Node
-                break;
-            case 4:
-                UART_transmitString(" DTA: "); //Payload Data
-                break;
-            default:
-                break;
-        }
-        while(!(UCA0IFG&UCTXIFG));
-        UCA0TXBUF = finalMsg[i];
-    }
-}
-
-void NcApiSupportMessageReceived(uint8_t n,void * callbackToken, uint8_t * msg, uint8_t msgLength)
-{
-    tNcApiAllMessages NcApiMsg;
-
-    switch(msg[0])
-    {
-    case HostAckEnum:
-        NcApiGetMsgAsHostAck(msg, &NcApiMsg.NcApiAckNack);
-        break;
-    case HostNAckEnum:
-        NcApiGetMsgAsHostAck(msg, &NcApiMsg.NcApiAckNack);
-        break;
-    case HostDataEnum:
-        NcApiGetMsgAsHostData(msg, &NcApiMsg.NcApiHostData);
-        break;
-    case HostDataHapaEnum:
-        NcApiGetMsgAsHostDataHapa(msg, &NcApiMsg.NcApiHostDataHapa);
-        break;
-    case HostUappDataEnum:
-        NcApiGetMsgAsHostUappData(msg, &NcApiMsg.NcApiHostDataUapp);
-        break;
-    case HostUappDataHapaEnum:
-        NcApiGetMsgAsHostUappDataHapa(msg, &NcApiMsg.NcApiHostDataUappHapa);
-        break;
-    case NodeInfoReplyEnum:
-        NcApiGetMsgAsNodeInfoReply(msg, &NcApiMsg.NcApiNodeInfo);
-        break;
-    case NeighborListReplyEnum:
-        NcApiGetMsgAsNeighborListReply(msg, &NcApiMsg.NcApiNeighborList);
-        break;
-    case NetCmdReplyEnum:
-        NcApiGetMsgAsNetCmdResponse(msg, &NcApiMsg.NcApiNetCmdResponse);
-        break;
-    case WesStatusEnum:
-        NcApiGetMsgAsWesStatus(msg, &NcApiMsg.NcApiWesStatus);
-        break;
-    case WesSetupRequestEnum:
-        NcApiGetMsgAsWesSetupRequest(msg, &NcApiMsg.NcApiWesSetupRequest);
-        break;
-    default:
-        // unhandled
-        break;
-    }
-
-}
-
-void ExampleSendUnacknowledged(uint16_t destNodeId, uint8_t port, uint16_t appSeqNo, uint8_t * payload, uint8_t payloadLen)
-{
-    tNcApiSendUnackParams args;
-    NcApiErrorCodes apiStatus;
-    args.msg.destNodeId = destNodeId;
-    args.msg.destPort = port;
-    args.msg.appSeqNo = appSeqNo;
-    args.msg.payload = payload;
-    args.msg.payloadLength = payloadLen;
-    args.callbackToken = &g_ncApi;
-    apiStatus = NcApiSendUnacknowledged(0, &args);
-    if (apiStatus != NCAPI_OK)
-    {
-        ; // Application specific
-    }
-}
-
-void ExampleSendAcknowledged(uint16_t destNodeId, uint8_t port, uint8_t * payload, uint8_t payloadLen)
-{
-    tNcApiSendAckParams args;
-    NcApiErrorCodes apiStatus;
-    args.msg.destNodeId = destNodeId;
-    args.msg.destPort = port;
-    args.msg.payload = payload;
-    args.msg.payloadLength = payloadLen;
-    args.callbackToken = &g_ncApi;
-    apiStatus = NcApiSendAcknowledged(0, &args);
-    if (apiStatus != NCAPI_OK)
-    {
-        ; // Application specific
-    }
+    UART_transmitString(" BMI160 Initialized \n");
+    
 }
 //******************************************************************************
 // Device Initialization *******************************************************
@@ -491,30 +349,6 @@ void initGPIO()
     // Configure P2.0 and P2.1 to UART (Primary, TX and RX respectively)
     P2SEL0 |= BIT0 | BIT1;                    // USCI_A1 UART operation
     P2SEL1 &= ~(BIT0 | BIT1);                 // SEL1 is 0 and SEL0 is 1 for primary operation, inverse for secondary
-
-    // Configure button S1 (P1.1) interrupt
-    GPIO_selectInterruptEdge(GPIO_PORT_P1, GPIO_PIN1, GPIO_HIGH_TO_LOW_TRANSITION);
-    GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
-    GPIO_clearInterrupt(GPIO_PORT_P1, GPIO_PIN1);
-    GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
-
-    // Configure button S2 (P1.2) interrupt
-    GPIO_selectInterruptEdge(GPIO_PORT_P1, GPIO_PIN2, GPIO_HIGH_TO_LOW_TRANSITION);
-    GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN2);
-    GPIO_clearInterrupt(GPIO_PORT_P1, GPIO_PIN2);
-    GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN2);
-
-    // Configure CTS active (P1.3) interrupt
-    GPIO_selectInterruptEdge(GPIO_PORT_P1, GPIO_PIN3, GPIO_HIGH_TO_LOW_TRANSITION);
-    GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN3);
-    GPIO_clearInterrupt(GPIO_PORT_P1, GPIO_PIN3);
-    GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN3);
-
-    // Configure Nwu (P1.4) interrupt
-    GPIO_selectInterruptEdge(GPIO_PORT_P1, GPIO_PIN4, GPIO_HIGH_TO_LOW_TRANSITION);
-    GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN4);
-    GPIO_clearInterrupt(GPIO_PORT_P1, GPIO_PIN4);
-    GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN4);
 
     // Configure INT1 (P3.2) interrupt
     GPIO_selectInterruptEdge(GPIO_PORT_P3, GPIO_PIN2, GPIO_HIGH_TO_LOW_TRANSITION);
@@ -606,13 +440,13 @@ void UART_init(void)
     UART_init();
     NcApiInit();
     bmi160_init('Z');
-    //UART_transmitString("Initialized");
+    UART_transmitString(" System Initialized \n");
 
     //Send start values from the accelerometer, should all be zero
     bmi160_readX(1);
     bmi160_readY(1);
     bmi160_readZ(1);
-
+     
     __bis_SR_register(LPM0_bits + GIE);
     return 0;
 }
@@ -712,34 +546,6 @@ __interrupt void USCI_B1_ISR(void)
   }
 }
 
-#pragma vector = PORT1_VECTOR
-__interrupt void PORT1_ISR(void)
-{
-    switch(__even_in_range(P1IV, P1IV_P1IFG7))
-       {
-           case P1IV_NONE : break;
-           case P1IV_P1IFG0 : break;
-           case P1IV_P1IFG1 :    // Button S1 pressed
-               GPIO_toggleOutputOnPin(GPIO_PORT_P1, GPIO_PIN0); //Toggle LED1
-               GPIO_clearInterrupt(GPIO_PORT_P1, GPIO_PIN1);
-               break;
-           case P1IV_P1IFG2 :   // Button S2 pressed
-               __delay_cycles(32000000);
-               GPIO_clearInterrupt(GPIO_PORT_P1, GPIO_PIN2); //4 second pause
-               break;
-           case P1IV_P1IFG3 :   // CTS high to low transition on P1.3
-               NcApiCtsActive(0);
-               break;
-           case P1IV_P1IFG4 : //
-               NcApiCallbackNwuActive(0);
-               break;
-           case P1IV_P1IFG5 : break;
-           case P1IV_P1IFG6 : break;
-           case P1IV_P1IFG7 : break;
-           default : _never_executed();
-       }
-}
-
 #pragma vector = PORT2_VECTOR
 __interrupt void PORT2_ISR(void)
 {
@@ -786,9 +592,7 @@ __interrupt void USCI_A1_ISR(void)
   switch(__even_in_range(UCA1IV, USCI_UART_UCTXCPTIFG))
   {
     case USCI_NONE: break;
-    case USCI_UART_UCRXIFG:
-        NcApiRxData(0, UCA1RXBUF);
-        break;
+    case USCI_UART_UCRXIFG: break;
     case USCI_UART_UCTXIFG: break;
     case USCI_UART_UCSTTIFG: break;
     case USCI_UART_UCTXCPTIFG: break;
